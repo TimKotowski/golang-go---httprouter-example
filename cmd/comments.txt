@@ -1,0 +1,94 @@
+func GetAll(db *sql.DB) httprouter.Handle {
+	return func (w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+		results, err := db.Query("SELECT * FROM todos")
+		// give me back the results or rows with the error since query returns a row and err
+
+		 if err != nil {
+			 // if err is not empty log the error
+			 log.Println(err)
+		 }
+		 // then close the handle
+		 defer results.Close()
+
+		 	// loop through the results aka the row with .Next()
+		 for results.Next(){
+			 // crate a todo variable to refernce the Todo struct
+			todo := Todo{}
+			// scan returns an err so return err
+			// take the results from the loop which will now be a single row when looping over
+			// and in the Scan function, give me the address in memory which gvie me  the values and puts them the struct
+			// I want to have those struct fields values change insde Scan() so it can reference the Todo struct
+			// if i didnt do the pointer (&), what would happen is it would put the copy of the todo values inside the Scan() function
+			// but not the oriringal Todo Struct
+			// it would not put the values inside the todo struct, rather just be changes in the Scan() function
+			// want to be able to take those values and get the address in memory of those values which will then
+			// put those values into the todo struct
+			// beacuse the & will get the adress in memory of the todo fields and  modify and put them into the struct
+			err = results.Scan(&todo.ID, &todo.Name, &todo.Title, &todo.Description)
+
+			var jsonData []byte
+			jsonData, err := json.Marshal(err)
+			// if these is an err and is not empty log the error
+			if err != nil {
+				log.Println(err)
+			}
+			// else print out the values in the terminal
+			fmt.Println("all todos ", todo)
+		 }
+
+
+			w.Write([]byte("OK, we got all todos"))
+		}
+}
+
+______
+func SingleTodo(db *sql.DB) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+		var singleTodo Todo
+		selectedTodo := `SELECT id FROM todos WHERE id=?`
+    params := httprouter.ParamsFromContext(r.Context())
+		if err := json.NewDecoder(r.Body).Decode(&singleTodo); err != nil {
+			log.Println(err)
+			return
+		}
+		row, err := db.QueryRow(singleTodo, singleTodo.ID)
+		err = Scan(&row)
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		w.Write("id", id)
+	}
+}
+
+________
+func CreateTodo(db *sql.DB) httprouter.Handle {
+	return func (w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		// this is the same as the above code
+		// err := json.NewDecoder(r.Body).Decode(&reqBody)
+		// if err != nil {
+			// 	log.Println()
+			// 	return
+			// }
+
+			// exec will just exceucte the query with our variables
+			// replacing the money syombls with the values
+			// dont need ot return anyhtingso just ignore the row so _
+			var reqBody Todo
+			insertStatment := `INSERT INTO todos (name, title, description) VALUES (?, ?, ?)`
+			// jsonNewDecoder(r.body) get the json of the req.body
+			// Decode(&reqBody) will get the json of the body and get the values of of the json and change the values  inside Decode() and
+			// get the moemeory address oof the &reqBody which will store the changed values inside the Todo struct because var reqBody Todo in the struct
+			// json will match the json string in th struct and put it inside the structs appropriate field
+			if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+				log.Println(err)
+				return
+			}
+			_, err := db.Exec(insertStatment, reqBody.Name, reqBody.Title, reqBody.Description)
+			fmt.Printf("body %+v", reqBody)
+			errorHandler(err)
+		w.Write([]byte("todo created"))
+	}
+}
