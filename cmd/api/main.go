@@ -37,7 +37,7 @@ func GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	for results.Next() {
 		// crate a todo variable to refernce the Todo struct
 		todo := Todo{}
-		err = results.Scan(&todo.ID, &todo.Name, &todo.Title, &todo.Description)
+		err := results.Scan(&todo.ID, &todo.Name, &todo.Title, &todo.Description)
 		if err != nil {
 			log.Println(err)
 			w.Write([]byte("We got an error"))
