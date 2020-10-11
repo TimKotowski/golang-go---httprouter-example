@@ -161,7 +161,7 @@ func UpdateTodo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 func main() {
 	var err error
-	db, err = sql.Open("mysql", "root:butter333@/todo")
+	db, err = sql.Open("mysql", "root:password@/todo")
 
 	if err != nil {
 		panic(err)
